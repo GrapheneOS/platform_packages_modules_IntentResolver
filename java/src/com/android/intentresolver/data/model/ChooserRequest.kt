@@ -30,6 +30,7 @@ import androidx.annotation.StringRes
 import com.android.intentresolver.ContentTypeHint
 import com.android.intentresolver.IChooserInteractiveSessionCallback
 import com.android.intentresolver.ext.hasAction
+import com.android.intentresolver.util.sanitizePayloadIntents
 import com.android.systemui.shared.Flags.screenshotContextUrl
 
 const val ANDROID_APP_SCHEME = "android-app"
@@ -197,6 +198,18 @@ data class ChooserRequest(
     }
 
     val payloadIntents = listOf(targetIntent) + additionalTargets
+
+    /**
+     * Payload intents that should be used for cross-profile sharing.
+     *
+     * These intents are a copy of `payloadIntents`. For security reasons, explicit targeting
+     * information is removed from each [Intent] in the list, as well as from its
+     * [selector][Intent.getSelector]. Specifically, the values that would be returned by
+     * [Intent.getPackage] and [Intent.getComponent] are cleared for both the main intent and its
+     * selector. This sanitization is performed because explicit intents could otherwise be used to
+     * bypass the device's cross-profile sharing policy settings.
+     */
+    val crossProfilePayloadIntents by lazy { sanitizePayloadIntents(payloadIntents) }
 
     val callerAllowsTextToggle =
         screenshotContextUrl() && "com.android.systemui".equals(referrerPackage)
