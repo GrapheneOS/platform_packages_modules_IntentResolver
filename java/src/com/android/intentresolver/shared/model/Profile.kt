@@ -16,8 +16,6 @@
 
 package com.android.intentresolver.shared.model
 
-import com.android.intentresolver.shared.model.Profile.Type
-
 /**
  * Associates [users][User] into a [Type] instance.
  *
@@ -32,7 +30,7 @@ data class Profile(
      * An optional [User] of which contains second instances of some applications installed for the
      * personal user. This value may only be supplied when creating the PERSONAL profile.
      */
-    val clone: User? = null
+    val clone: User? = null,
 ) {
 
     init {
@@ -47,6 +45,6 @@ data class Profile(
     enum class Type {
         PERSONAL,
         WORK,
-        PRIVATE
+        PRIVATE,
     }
 }
