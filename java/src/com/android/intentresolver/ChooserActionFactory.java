@@ -68,16 +68,16 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
          * Request an activity launch for the provided target. Implementations may choose to exit
          * the current activity when the target is launched.
          */
-        void safelyStartActivityAsPersonalProfileUser(TargetInfo info);
+        void safelyStartActivityAsLaunchingUser(TargetInfo info);
 
         /**
          * Request an activity launch for the provided target, optionally employing the specified
          * shared element transition. Implementations may choose to exit the current activity when
          * the target is launched.
          */
-        default void safelyStartActivityAsPersonalProfileUserWithSharedElementTransition(
+        default void safelyStartActivityAsLaunchingUserWithSharedElementTransition(
                 TargetInfo info, View sharedElement, String sharedElementName) {
-            safelyStartActivityAsPersonalProfileUser(info);
+            safelyStartActivityAsLaunchingUser(info);
         }
     }
 
@@ -350,9 +350,9 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
             } catch (Exception e) { /* ignore */ }
             // Action bar is user-independent; always start as primary.
             if (firstImageView == null || !isFullyVisible(firstImageView)) {
-                activityStarter.safelyStartActivityAsPersonalProfileUser(editSharingTarget);
+                activityStarter.safelyStartActivityAsLaunchingUser(editSharingTarget);
             } else {
-                activityStarter.safelyStartActivityAsPersonalProfileUserWithSharedElementTransition(
+                activityStarter.safelyStartActivityAsLaunchingUserWithSharedElementTransition(
                         editSharingTarget, firstImageView, IMAGE_EDITOR_SHARED_ELEMENT);
             }
         };
