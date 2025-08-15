@@ -24,6 +24,8 @@ import android.provider.MediaStore.MediaColumns.HEIGHT
 import android.provider.MediaStore.MediaColumns.WIDTH
 import android.service.chooser.AdditionalContentContract.Columns.URI
 import android.util.Size
+import com.android.intentresolver.domain.FakeUriGrantsManager
+import com.android.intentresolver.domain.UriCallerReadAccessValidator
 import com.android.intentresolver.util.cursor.get
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
@@ -31,8 +33,8 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
-import org.mockito.kotlin.capture
 import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.doThrow
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
@@ -40,10 +42,13 @@ import org.mockito.kotlin.verify
 class PayloadToggleCursorResolverTest {
     private val cursorUri = Uri.parse("content://org.pkg.app.extra")
     private val chooserIntent = Intent()
+    private val uriCallerAccessValidator =
+        UriCallerReadAccessValidator(FakeUriGrantsManager(), 1234, "org.package")
 
     @Test
     fun missingSizeColumns() = runTest {
         val uri = createUri(1)
+        val inaccessibleUri = createUri(2)
         val sourceCursor =
             MatrixCursor(arrayOf(URI)).apply {
                 addRow(arrayOf(uri.toString()))
@@ -53,6 +58,7 @@ class PayloadToggleCursorResolverTest {
                     )
                 )
                 addRow(arrayOf(null))
+                addRow(arrayOf(inaccessibleUri.toString()))
             }
         val fakeContentProvider =
             mock<ContentInterface> {
@@ -63,11 +69,16 @@ class PayloadToggleCursorResolverTest {
                 fakeContentProvider,
                 cursorUri,
                 chooserIntent,
+                UriCallerReadAccessValidator(
+                    FakeUriGrantsManager(mutableSetOf(inaccessibleUri)),
+                    1234,
+                    "org.package",
+                ),
             )
 
         val cursor = testSubject.getCursor()
         assertThat(cursor).isNotNull()
-        assertThat(cursor!!.count).isEqualTo(3)
+        assertThat(cursor!!.count).isEqualTo(sourceCursor.count)
         cursor[0].let { row ->
             assertThat(row).isNotNull()
             assertThat(row!!.uri).isEqualTo(uri)
@@ -75,6 +86,7 @@ class PayloadToggleCursorResolverTest {
         }
         assertThat(cursor[1]).isNull()
         assertThat(cursor[2]).isNull()
+        assertThat(cursor[3]).isNull()
     }
 
     @Test
@@ -93,6 +105,7 @@ class PayloadToggleCursorResolverTest {
                 fakeContentProvider,
                 cursorUri,
                 chooserIntent,
+                uriCallerAccessValidator,
             )
 
         val cursor = testSubject.getCursor()
@@ -127,6 +140,7 @@ class PayloadToggleCursorResolverTest {
                 fakeContentProvider,
                 cursorUri,
                 chooserIntent,
+                uriCallerAccessValidator,
             )
 
         val cursor = testSubject.getCursor()
@@ -138,6 +152,31 @@ class PayloadToggleCursorResolverTest {
                 assertWithMessage("Row $i").that(row!!.position).isEqualTo(i)
             }
         }
+    }
+
+    @Test
+    fun testInaccessibleAdditionalContentUri() = runTest {
+        val fakeContentProvider =
+            mock<ContentInterface> {
+                on { query(eq(cursorUri), any(), any(), any()) } doThrow
+                        RuntimeException("This content provider should not be called")
+            }
+        val testSubject =
+            PayloadToggleCursorResolver(
+                fakeContentProvider,
+                cursorUri,
+                chooserIntent,
+                UriCallerReadAccessValidator(
+                    FakeUriGrantsManager(mutableSetOf(cursorUri)),
+                    1234,
+                    "org.package",
+                ),
+            )
+
+        val cursor = testSubject.getCursor()
+
+        assertThat(cursor).isNull()
+        verify(fakeContentProvider) { 0 * { query(any(), any(), any(), any()) } }
     }
 }
 

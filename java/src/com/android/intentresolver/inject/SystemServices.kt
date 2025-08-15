@@ -16,6 +16,8 @@
 package com.android.intentresolver.inject
 
 import android.app.ActivityManager
+import android.app.IUriGrantsManager
+import android.app.UriGrantsManager
 import android.app.admin.DevicePolicyManager
 import android.app.prediction.AppPredictionManager
 import android.content.ClipboardManager
@@ -94,7 +96,7 @@ class PackageManagerModule {
 class PredictionManagerModule {
     @Provides
     fun scopedPredictionManager(
-        @ApplicationContext ctx: Context,
+        @ApplicationContext ctx: Context
     ): UserScopedService<AppPredictionManager> {
         return UserScopedServiceImpl(ctx, AppPredictionManager::class)
     }
@@ -110,7 +112,7 @@ class ShortcutManagerModule {
 
     @Provides
     fun scopedShortcutManager(
-        @ApplicationContext ctx: Context,
+        @ApplicationContext ctx: Context
     ): UserScopedService<ShortcutManager> {
         return UserScopedServiceImpl(ctx, ShortcutManager::class)
     }
@@ -133,4 +135,10 @@ class UserManagerModule {
 class WindowManagerModule {
     @Provides
     fun windowManager(@ApplicationContext ctx: Context): WindowManager = ctx.requireSystemService()
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+class UriGrantsManagerModule {
+    @Provides fun uriGrantsManager(): IUriGrantsManager = UriGrantsManager.getService()
 }
