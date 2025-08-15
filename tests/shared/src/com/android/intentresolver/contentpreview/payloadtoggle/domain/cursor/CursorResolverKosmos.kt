@@ -18,6 +18,7 @@ package com.android.intentresolver.contentpreview.payloadtoggle.domain.cursor
 
 import com.android.intentresolver.contentResolver
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.CursorRow
+import com.android.intentresolver.domain.uriCallerReadAccessValidator
 import com.android.intentresolver.inject.additionalContentUri
 import com.android.intentresolver.inject.chooserIntent
 import com.android.systemui.kosmos.Kosmos
@@ -30,4 +31,5 @@ val Kosmos.payloadToggleCursorResolverImpl
             contentResolver,
             additionalContentUri,
             chooserIntent,
+            uriCallerReadAccessValidator,
         )

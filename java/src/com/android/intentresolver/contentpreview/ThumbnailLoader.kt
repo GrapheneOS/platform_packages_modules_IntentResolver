@@ -20,6 +20,7 @@ import android.content.ContentResolver
 import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Size
+import com.android.intentresolver.domain.UriCallerReadAccessValidator
 import com.android.intentresolver.util.withCancellationSignal
 import javax.inject.Inject
 
@@ -46,15 +47,24 @@ class ThumbnailLoaderImpl
 constructor(
     private val contentResolver: ContentResolver,
     @ThumbnailSize thumbnailSize: Int,
+    private val uriAccessValidator: UriCallerReadAccessValidator,
 ) : ThumbnailLoader {
 
     private val size = Size(thumbnailSize, thumbnailSize)
 
-    override suspend fun loadThumbnail(uri: Uri): Bitmap =
-        contentResolver.loadThumbnail(uri, size, /* signal= */ null)
+    override suspend fun loadThumbnail(uri: Uri): Bitmap {
+        assertAccess(uri)
+        return contentResolver.loadThumbnail(uri, size, /* signal= */ null)
+    }
 
-    override suspend fun loadThumbnail(uri: Uri, size: Size): Bitmap =
-        withCancellationSignal { signal ->
-            contentResolver.loadThumbnail(uri, size, signal)
+    override suspend fun loadThumbnail(uri: Uri, size: Size): Bitmap {
+        assertAccess(uri)
+        return withCancellationSignal { signal -> contentResolver.loadThumbnail(uri, size, signal) }
+    }
+
+    private fun assertAccess(uri: Uri) {
+        if (!uriAccessValidator.checkAccess(uri)) {
+            throw SecurityException("The calling application does not have access to $uri")
         }
+    }
 }
