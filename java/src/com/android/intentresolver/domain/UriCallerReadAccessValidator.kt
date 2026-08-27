@@ -71,7 +71,8 @@ constructor(
 object CallerUriReadAccessValidatorModule {
     @Provides
     @PackageName
-    fun packageName(@ApplicationContext context: Context): String = context.packageName
+    fun packageName(activityModelRepository: ActivityModelRepository): String =
+        activityModelRepository.value.launchedFromPackage
 
     @Provides
     @LaunchedFromUid
